@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ubs.entity.Position;
 import com.ubs.entity.Transaction;
+import com.ubs.util.Constants;
 
 /**
  * The Class ReaderWriter.
@@ -28,30 +29,18 @@ public class ReaderWriter {
     /** The Constant logger. */
     final static Logger logger = Logger.getLogger( ReaderWriter.class );
 
-    /** The Constant INPUT_POSITIONS_PATH. */
-    private final static String INPUT_POSITIONS_PATH = "Input_Positions.txt";
-
-    /** The Constant INPUT_TRANSACTIONS_PATH. */
-    private final static String INPUT_TRANSACTIONS_PATH = "Input_Transactions.txt";
-
-    private final static String OUTPUT_FILE = "D:/Expected_EndOfDay_Positions.csv";
-
-    /** The Constant POSITION_DELIMITER. */
-    private final static String POSITION_DELIMITER = ",|\\n";
-
-    /** The Constant TRANSACTION_DELIMITER. */
-    private final static String TRANSACTION_DELIMITER = "\\Z";
-
     /**
      * Read position file.
      *
+     * @param fileName the file name
+     * @param delimiter the delimiter
      * @return the list
      */
-    public List<Position> readPositionFile() {
+    public List<Position> readPositionFile( String fileName, String delimiter ) {
         logger.info( "Reading Position file" );
         ArrayList<Position> positionList = new ArrayList<Position>();
         Position p = null;
-        Scanner input = skipLines( getScannerObject( INPUT_POSITIONS_PATH, POSITION_DELIMITER ), 1 );
+        Scanner input = skipLines( getScannerObject( fileName, delimiter ), 1 );
         while ( input.hasNext() ) {
             p = new Position();
             p.setInstrumentName( input.next() );
@@ -68,22 +57,28 @@ public class ReaderWriter {
     /**
      * Read transactions.
      *
+     * @param fileName the file name
+     * @param delimiter the delimiter
      * @return the list
+     * @throws IOException 
      */
-    public List<Transaction> readTransactions() {
+    public List<Transaction> readTransactions( String fileName, String delimiter ) throws IOException {
         logger.info( "Reading transaction file" );
         List<Transaction> tranactionList = null;
-        String transactions = getScannerObject( INPUT_TRANSACTIONS_PATH, TRANSACTION_DELIMITER ).next();
+        String transactions = getScannerObject( fileName, delimiter ).next();
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             tranactionList = objectMapper.readValue( transactions, new TypeReference<List<Transaction>>() {
             } );
         } catch ( JsonParseException e ) {
-            logger.debug( "Error while parsing json file" + INPUT_TRANSACTIONS_PATH + e.getMessage() );
+            logger.debug( "Error while parsing json file" + fileName + e.getMessage() );
+            throw e;
         } catch ( JsonMappingException e ) {
-            logger.debug( "Error while mapping json file" + INPUT_TRANSACTIONS_PATH + e.getMessage() );
+            logger.debug( "Error while mapping json file" + fileName + e.getMessage() );
+            throw e;
         } catch ( IOException e ) {
-            logger.debug( "Error in reading file at path" + INPUT_TRANSACTIONS_PATH + e.getMessage() );
+            logger.debug( "Error in reading file at path" + fileName + e.getMessage() );
+            throw e;
         }
         logger.info( "Reading transaction file completed" );
         return tranactionList;
@@ -120,11 +115,16 @@ public class ReaderWriter {
             File file = new File( classLoader.getResource( fileName ).getFile() );
             scanner = new Scanner( file ).useDelimiter( delimiter );
         } catch ( FileNotFoundException e ) {
-            logger.debug( "Error in reading file at path" + INPUT_TRANSACTIONS_PATH + e.getMessage() );
+            logger.debug( "Error in reading file at path" + fileName + e.getMessage() );
         }
         return scanner;
     }
 
+    /**
+     * Write output.
+     *
+     * @param mapOfPositions the map of positions
+     */
     public void writeOutput( Map<String, Position> mapOfPositions ) {
         logger.info( "Starting to write output" );
         try {
@@ -134,7 +134,7 @@ public class ReaderWriter {
                 output.append( p.toString() );
                 output.append( "\n" );
             } );
-            Path path = Files.write( Paths.get( OUTPUT_FILE ), output.toString().getBytes() );
+            Path path = Files.write( Paths.get( Constants.OUTPUT_FILE ), output.toString().getBytes() );
             logger.debug( "\nOutput file is at location :: " + path.toAbsolutePath().toString() );
         } catch ( IOException e ) {
             logger.debug( "Error while writing output file" + e.getMessage() );

@@ -7,7 +7,9 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.ubs.entity.Position;
+import com.ubs.entity.Position.AccountType;
 import com.ubs.entity.Transaction;
+import com.ubs.entity.Transaction.TransactionType;
 
 /**
  * The Class ProcessPositionCalculation.
@@ -27,31 +29,33 @@ public class ProcessPositionCalculation {
         logger.debug( "Starting to calculate positions" );
         Map<String, Position> mapOfPositions = new LinkedHashMap<>();
 
-        for ( Transaction t : transactionList ) {
-            for ( Position p : positionList ) {
-                if ( p.getInstrumentName().equalsIgnoreCase( t.getInstrumentName() ) ) {
-                    if ( Transaction.TransactionType.B.equals( t.getTransactionType() ) ) {
+        if ( transactionList != null ) 
+            for ( Transaction t : transactionList ) {
+                for ( Position p : positionList ) {
+                    if ( p.getInstrumentName().equalsIgnoreCase( t.getInstrumentName() ) ) {
+                        if ( TransactionType.B.equals( t.getTransactionType() ) ) {
 
-                        if ( Position.AccountType.E.equals( p.getAccountType() ) ) {
-                            handleAddition( mapOfPositions, p, t );
+                            if ( AccountType.E.equals( p.getAccountType() ) ) {
+                                handleAddition( mapOfPositions, p, t );
+                            }
+                            if ( AccountType.I.equals( p.getAccountType() ) ) {
+                                handleSubtraction( mapOfPositions, p, t );
+                            }
                         }
-                        if ( Position.AccountType.I.equals( p.getAccountType() ) ) {
-                            handleSubtraction( mapOfPositions, p, t );
+
+                        if ( TransactionType.S.equals( t.getTransactionType() ) ) {
+                            if ( AccountType.E.equals( p.getAccountType() ) ) {
+                                handleSubtraction( mapOfPositions, p, t );
+                            }
+                            if ( AccountType.I.equals( p.getAccountType() ) ) {
+                                handleAddition( mapOfPositions, p, t );
+                            }
                         }
+
                     }
-
-                    if ( Transaction.TransactionType.S.equals( t.getTransactionType() ) ) {
-                        if ( Position.AccountType.E.equals( p.getAccountType() ) ) {
-                            handleSubtraction( mapOfPositions, p, t );
-                        }
-                        if ( Position.AccountType.I.equals( p.getAccountType() ) ) {
-                            handleAddition( mapOfPositions, p, t );
-                        }
-                    }
-
                 }
             }
-        }
+        
         logger.debug( "Calculation of positions completed" );
         return mapOfPositions;
     }
