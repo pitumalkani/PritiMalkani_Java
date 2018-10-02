@@ -20,6 +20,7 @@ import com.ubs.entity.Position;
 import com.ubs.entity.Transaction;
 import com.ubs.util.Constants;
 
+// TODO: Auto-generated Javadoc
 /**
  * The Class ReaderWriterTest.
  */
@@ -59,12 +60,12 @@ public class ReaderWriterTest {
     }
 
     /**
-     * Test read transactions for null.
+     * Test read transactions should throw json parsing exception for invalid data.
      *
      * @throws IOException Signals that an I/O exception has occurred.
      */
     @Test ( expected = JsonParseException.class )
-    public void testReadTransactionsForNull() throws IOException {
+    public void testReadTransactionsShouldThrowJsonParsingExceptionForInvalidData() throws IOException {
         readWriter.readTransactions( Constants.INPUT_POSITIONS_PATH, Constants.TRANSACTION_DELIMITER );
     }
 
